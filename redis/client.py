@@ -950,12 +950,15 @@ class StrictRedis(object):
         """
         return self.execute_command('ZREMRANGEBYRANK', name, min, max)
 
-    def zremrangebyscore(self, name, min, max):
+    def zremrangebyscore(self, name, min, max, start = None, num = None):
         """
         Remove all elements in the sorted set ``name`` with scores
         between ``min`` and ``max``. Returns the number of elements removed.
         """
-        return self.execute_command('ZREMRANGEBYSCORE', name, min, max)
+        pieces = list()
+        if start is not None and num is not None:
+            pieces.extend(['LIMIT', start, num])
+        return self.execute_command('ZREMRANGEBYSCORE', name, min, max, *pieces)
 
     def zrevrange(self, name, start, num, withscores=False,
                   score_cast_func=float):
