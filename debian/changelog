@@ -1,7 +1,7 @@
-python-redis (2.4.13-1~solute2) squeeze-backports; urgency=low
+python-redis (2.7.2-1~solute1) squeeze-qs; urgency=low
 
   * Add start = None, num = None to zremrangebyscore
-  * Bumped to 2.4.13
+  * Bumped to 2.7.2
 
  -- Michael van Bracht <mvb@solute.de>  Thu, 30 Aug 2012 10:09:46 +0200
 
