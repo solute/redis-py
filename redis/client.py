@@ -2,6 +2,7 @@ from __future__ import with_statement
 from itertools import chain, starmap
 import datetime
 import sys
+import hashlib
 import warnings
 import time as mod_time
 from redis._compat import (b, izip, imap, iteritems, dictkeys, dictvalues,
@@ -1354,14 +1355,14 @@ class StrictRedis(object):
         options = {'parse': 'LOAD'}
         return self.execute_command('SCRIPT', 'LOAD', script, **options)
 
-    def register_script(self, script):
+    def register_script(self, script, lazy = False):
         """
         Register a LUA ``script`` specifying the ``keys`` it will touch.
         Returns a Script object that is callable and hides the complexity of
         deal with scripts, keys, and shas. This is the preferred way to work
         with LUA scripts.
         """
-        return Script(self, script)
+        return Script(self, script, lazy)
 
 class Redis(StrictRedis):
     """
@@ -1874,10 +1875,12 @@ class Pipeline(BasePipeline, Redis):
 class Script(object):
     "An executable LUA script object returned by ``register_script``"
 
-    def __init__(self, registered_client, script):
+    def __init__(self, registered_client, script, lazy = False):
         self.registered_client = registered_client
         self.script = script
-        self.sha = registered_client.script_load(script)
+        self.sha = hashlib.sha1(script).hexdigest()
+        if not lazy:
+            registered_client.script_load(script)
 
     def __call__(self, keys=[], args=[], client=None):
         "Execute the script, passing any required ``args``"
@@ -1892,7 +1895,7 @@ class Script(object):
         except NoScriptError:
             # Maybe the client is pointed to a differnet server than the client
             # that created this instance?
-            self.sha = client.script_load(self.script)
+            client.script_load(self.script)
             return client.evalsha(self.sha, len(keys), *args)
 
 
